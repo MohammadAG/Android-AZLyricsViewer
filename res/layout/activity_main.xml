@@ -4,55 +4,56 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity" >
 
+	<ScrollView
+	    android:id="@+id/lyricsScrollView"
+	    android:layout_width="match_parent"
+	    android:layout_height="match_parent"
+	    android:layout_below="@+id/artistNameTextEdit"
+	    android:layout_centerHorizontal="true"
+	    android:layout_margin="10dp"
+	    android:fillViewport="true"
+	    android:scrollbars="vertical" >
+
+	        <TextView
+	            android:id="@+id/lyricsTextView"
+	            android:layout_width="match_parent"
+	            android:layout_height="wrap_content"
+	            android:textIsSelectable="true" />
+    </ScrollView>
+
     <EditText
         android:id="@+id/songNameTextEdit"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
+        android:layout_alignLeft="@+id/artistNameTextEdit"
         android:layout_alignParentTop="true"
-        android:layout_marginTop="14dp"
+        android:layout_marginTop="19dp"
+        android:layout_toLeftOf="@+id/fetchButton"
         android:ems="10"
-        android:hint="Song name" >
-
-        <requestFocus />
-    </EditText>
+        android:hint="@string/edittext_song_name"
+        android:imeOptions="actionNext"
+        android:singleLine="true" />
 
     <EditText
         android:id="@+id/artistNameTextEdit"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
+        android:layout_alignLeft="@+id/lyricsScrollView"
         android:layout_below="@+id/songNameTextEdit"
+        android:layout_toLeftOf="@+id/fetchButton"
         android:ems="10"
-        android:hint="Artist name" />
+        android:hint="@string/edittext_artist_name"
+        android:imeOptions="actionSearch"
+        android:singleLine="true" />
 
     <Button
-        android:id="@+id/button1"
+        android:id="@+id/fetchButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
-        android:layout_alignTop="@+id/editText1"
-        android:text="Fetch"
-        android:onClick="getLyrics" />
-
-    <ScrollView
-        android:id="@+id/scrollView1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentRight="true"
-        android:layout_below="@+id/artistNameTextEdit" >
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" >
-
-            <TextView
-                android:id="@+id/textView1"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
-
-        </LinearLayout>
-    </ScrollView>
+        android:layout_above="@+id/lyricsScrollView"
+        android:layout_alignRight="@+id/lyricsScrollView"
+        android:layout_alignTop="@+id/songNameTextEdit"
+        android:onClick="getLyrics"
+        android:text="@string/fetch_button_string" />
 
 </RelativeLayout>
