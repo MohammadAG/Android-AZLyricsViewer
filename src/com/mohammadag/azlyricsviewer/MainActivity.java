@@ -13,8 +13,10 @@ import org.apache.http.util.EntityUtils;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
@@ -23,6 +25,7 @@ import android.text.Html;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.view.inputmethod.EditorInfo;
@@ -36,12 +39,12 @@ public class MainActivity extends Activity implements OnInitListener {
 	private static final String TAG = "AZLyricsViewer";
 	private static final boolean DEBUG = false;
 
-	private TextView mLyricsView;
-	private EditText mSongTitleView;
-	private EditText mArtistNameView;
-	private Button mFetchButton;
+	private TextView mLyricsView = null;
+	private EditText mSongTitleView = null;
+	private EditText mArtistNameView = null;
+	private Button mFetchButton = null;
 
-	TextToSpeech myTTS;
+	private TextToSpeech myTTS;
 	private boolean mSpeakFinding = false;
 
 	@Override
@@ -191,5 +194,30 @@ public class MainActivity extends Activity implements OnInitListener {
 			}
 			super.onPostExecute(result);
 		}
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch (item.getItemId()) {
+		case R.id.menu_about:
+			return showAbout();
+		case R.id.menu_donate:
+			Intent intent = new Intent(Intent.ACTION_VIEW, 
+					Uri.parse("https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=L4ZLYKZRMFSVW"));
+			startActivity(intent);
+			return true;
+		}
+
+		return super.onOptionsItemSelected(item);
+	}
+
+	private boolean showAbout() {
+		AlertDialog.Builder alertDialog = new AlertDialog.Builder(MainActivity.this)
+		.setTitle(R.string.app_name)
+		.setMessage(R.string.about_text);
+
+		alertDialog.show();
+
+		return true;
 	}
 }
