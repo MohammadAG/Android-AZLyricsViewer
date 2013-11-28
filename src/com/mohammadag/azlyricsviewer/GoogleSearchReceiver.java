@@ -24,16 +24,16 @@ public class GoogleSearchReceiver extends BroadcastReceiver {
 
 		if (matcher.find()) {
 			songName = matcher.group(1);
-			
+
 			int index = queryText.lastIndexOf("by");
 			artistName = queryText.substring(index+2, queryText.length());
 		} else {
 			p = Pattern.compile( "by(.*)for", Pattern.DOTALL);
 			matcher = p.matcher(queryText);
-			
+
 			if (matcher.find()) {
 				artistName = matcher.group(1);
-				
+
 				int index = queryText.lastIndexOf("for");
 				songName = queryText.substring(index+3, queryText.length());
 			} else {
