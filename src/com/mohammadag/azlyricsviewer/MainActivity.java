@@ -1,15 +1,6 @@
 package com.mohammadag.azlyricsviewer;
 
 import java.util.Locale;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.util.EntityUtils;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -17,12 +8,10 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.TextToSpeech.OnInitListener;
 import android.text.Html;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -35,10 +24,9 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.TextView.OnEditorActionListener;
 
-public class MainActivity extends Activity implements OnInitListener {
-	private static final String TAG = "AZLyricsViewer";
-	private static final boolean DEBUG = false;
+import com.mohammadag.azlyricsviewer.LyricsFetcher.OnLyricsFetchedListener;
 
+public class MainActivity extends Activity implements OnInitListener, OnLyricsFetchedListener {
 	private TextView mLyricsView = null;
 	private EditText mSongTitleView = null;
 	private EditText mArtistNameView = null;
@@ -46,10 +34,14 @@ public class MainActivity extends Activity implements OnInitListener {
 
 	private TextToSpeech myTTS;
 	private boolean mSpeakFinding = false;
+	private LyricsFetcher mLyricsFetcher;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		
+		mLyricsFetcher = new LyricsFetcher(this);
+		mLyricsFetcher.setOnLyricsFetchedListener(this);
 
 		boolean isShowingQuickLyrics = false;
 		Intent intent = getIntent();
@@ -94,6 +86,7 @@ public class MainActivity extends Activity implements OnInitListener {
 
 			mSongTitleView.setText(songName);
 			mArtistNameView.setText(artistName);
+			mLyricsView.setText(R.string.loading);
 			getLyrics(mFetchButton);
 		} else {
 			mSongTitleView.requestFocus();
@@ -116,11 +109,21 @@ public class MainActivity extends Activity implements OnInitListener {
 		}
 	}
 
+	@Override
+	protected void onDestroy() {
+		if (myTTS != null) {
+			myTTS.stop();
+			myTTS.shutdown();
+		}
+
+		super.onDestroy();
+	}
+
 	private void findViews() {
-		mLyricsView = (TextView)findViewById(R.id.lyricsTextView);
-		mSongTitleView = (EditText)findViewById(R.id.songNameTextEdit);
-		mFetchButton = (Button)findViewById(R.id.fetchButton);
-		mArtistNameView = (EditText)findViewById(R.id.artistNameTextEdit);
+		mLyricsView = (TextView) findViewById(R.id.lyricsTextView);
+		mSongTitleView = (EditText) findViewById(R.id.songNameTextEdit);
+		mFetchButton = (Button) findViewById(R.id.fetchButton);
+		mArtistNameView = (EditText) findViewById(R.id.artistNameTextEdit);
 	}
 
 	@Override
@@ -136,64 +139,18 @@ public class MainActivity extends Activity implements OnInitListener {
 			imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
 		}
 
-		String artistName = mArtistNameView.getText().toString();
-		artistName = artistName.replaceAll("\\s","");
-		artistName = artistName.replaceAll(" ","");
+		String artistName =
+				Utils.removeNonAlphabeticalChars(mArtistNameView.getText());
 
-		String songName = mSongTitleView.getText().toString();
-		songName = songName.replaceAll("\\s","");
-		songName = songName.replaceAll(" ","");
-
-		String urlString = "http://www.azlyrics.com/lyrics/" + artistName.toLowerCase() + "/" + songName.toLowerCase() + ".html";
-
+		String songName =
+				Utils.removeNonAlphabeticalChars(mSongTitleView.getText());
 		mFetchButton.setEnabled(false);
-		new FetchLyrics().execute(urlString);
+		mLyricsFetcher.fetchLyrics(songName, artistName);
 	}
 
 	private void setLyrics(String lyrics) {
 		mLyricsView.setText(Html.fromHtml(lyrics));
 		mFetchButton.setEnabled(true);
-	}
-
-	private class FetchLyrics extends AsyncTask<String, Integer, String> {
-		@Override
-		protected String doInBackground(String... arg0) {
-			try {
-				HttpClient client = new DefaultHttpClient();  ;
-				HttpGet get = new HttpGet(arg0[0]);
-				HttpResponse responseGet = client.execute(get);  
-				HttpEntity resEntityGet = responseGet.getEntity();  
-				if (resEntityGet != null) {  
-					String response = EntityUtils.toString(resEntityGet);
-					Pattern p = Pattern.compile(
-							"<!-- start of lyrics -->(.*)<!-- end of lyrics -->",
-							Pattern.DOTALL
-							);
-
-					Matcher matcher = p.matcher(response);
-
-					if (matcher.find()) {
-						String htmlLyrics = matcher.group(1);
-						return htmlLyrics;
-					} else {
-						if (DEBUG) Log.i(TAG, "doesn't match");
-					}
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-			return null;
-		}
-
-		@Override
-		protected void onPostExecute(String result) {
-			if (result != null) {
-				setLyrics(result);
-			} else {
-				setLyrics(getString(R.string.lyrics_not_found));
-			}
-			super.onPostExecute(result);
-		}
 	}
 
 	@Override
@@ -219,5 +176,13 @@ public class MainActivity extends Activity implements OnInitListener {
 		alertDialog.show();
 
 		return true;
+	}
+
+	@Override
+	public void onLyricsFetched(boolean foundLyrics, String lyrics) {
+		if (!foundLyrics)
+			lyrics = getString(R.string.lyrics_not_found);
+		
+		setLyrics(lyrics);
 	}
 }
